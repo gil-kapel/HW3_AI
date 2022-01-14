@@ -14,7 +14,10 @@ from sklearn.model_selection import KFold
 ========================================================================
 """
 
-ID = 123456789  # TODO: change it to your personal ID
+
+
+
+ID = 305323776  # TODO: change it to your personal ID
 random_gen = RandomState(seed=ID)
 print_formatted_values = False
 
@@ -28,7 +31,7 @@ def accuracy(y: np.array, y_pred: np.array):
     """
     Calculate prediction accuracy: the fraction of predictions in that are
     equal to the ground truth.
-    :param y: Ground truth tensor of shape (N,)
+    :param y: Ground truth vector of shape (N,)
     :param y_pred: Predictions vector of shape (N,)
     :return: The prediction accuracy as a fraction.
     """
@@ -38,7 +41,7 @@ def accuracy(y: np.array, y_pred: np.array):
     assert y.ndim == 1
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
+    accuracy_val = np.sum(y == y_pred) / np.size(y)
     # ========================
 
     return accuracy_val
@@ -60,7 +63,9 @@ def l2_dist(x1: np.array, x2: np.array):
     dists = None
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
+
+    dists = np.linalg.norm(x1[:, np.newaxis] - x2, axis=2)
+
     # ========================
 
     return dists
