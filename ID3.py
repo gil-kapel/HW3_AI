@@ -1,5 +1,6 @@
 import math
 
+import numpy
 import numpy as np
 
 from DecisonTree import Leaf, Question, DecisionNode, class_counts
@@ -83,11 +84,11 @@ class ID3:
         gain, true_rows, true_labels, false_rows, false_labels = None, None, None, None, None
         assert len(rows) == len(labels), 'Rows size should be equal to labels size.'
 
-        # ====== YOUR CODE: ======
-        true_rows = rows[question.match(true_rows)]
-        true_labels = labels[true_rows]
-        false_rows = rows[not question.match(true_rows)]
-        false_labels = labels[false_rows]
+        # ====== YOUR CODE: =====
+        true_rows = np.array([row for row in rows if question.match(row)])
+        true_labels = np.array([labels[index] for index, row in enumerate(rows) if question.match(row)])
+        false_rows = np.array([row for row in rows if not question.match(row)])
+        false_labels = np.array([labels[index] for index, row in enumerate(rows) if not question.match(row)])
         gain = self.info_gain(true_rows, true_labels, false_rows, false_labels, current_uncertainty)
         # ========================
 
@@ -111,14 +112,12 @@ class ID3:
 
         # ====== YOUR CODE: ======
         curr_gain = 0
-        for col_index, column in enumerate(rows.T):
-            if col_index != 0:
-                for row_index, value in enumerate(column):
-                    if row_index != 0:
-                        new_question = Question(rows[0][col_index], col_index, value)
-                        gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
-                        if gain > best_gain:
-                            best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
+        for col_index, column in enumerate(numpy.transpose(rows)):
+            for row_index, value in enumerate(column):
+                new_question = Question(self.label_names[col_index+1], col_index, value)
+                gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
+                if gain > best_gain:
+                    best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
         # ========================
 
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
@@ -141,13 +140,11 @@ class ID3:
 
         # ====== YOUR CODE: ======
         gain, best_question, true_rows, true_labels, false_rows, false_labels = self.find_best_split(rows, labels)
-        if np.all(true_labels==true_labels[0]):
-            # making leaf
-            true_branch = Leaf(true_rows,true_labels)
+        if np.all(true_labels == true_labels[0]):
+            true_branch = Leaf(true_rows, true_labels)
         else:
-            true_branch = self.build_tree(true_rows, true_rows)
+            true_branch = self.build_tree(true_rows, true_labels)
         if np.all(false_labels == false_labels[0]):
-            # making leaf
             false_branch = Leaf(false_rows, false_labels)
         else:
             false_branch = self.build_tree(false_rows, false_labels)
