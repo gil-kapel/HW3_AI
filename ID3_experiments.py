@@ -1,3 +1,6 @@
+import numpy as np
+import sklearn.model_selection
+
 from ID3 import ID3
 from utils import *
 
@@ -39,9 +42,16 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
         #  or implement something else.
 
         # ====== YOUR CODE: ======
-        raise NotImplementedError
+        kf = sklearn.model_selection.KFold(n_splits=num_folds, shuffle=True, random_state=305323776)
+        curr_m_accuracy = []
+        for ds_train, ds_valid in create_train_validation_split(train_dataset, kf):
+            x_train, y_train, x_valid, y_valid = get_dataset_split(ds_train, ds_valid, target_attribute)
+            curr_acc = best_m_test(x_train, y_train, x_valid, y_valid, m)
+            curr_m_accuracy.append(curr_acc)
+        accuracies.append(curr_m_accuracy)
         # ========================
-
+    for index, val in enumerate(accuracies):
+        print(f"m : {m_choices[index]} mean : {np.mean(val)}")
     best_m_idx = np.argmax([np.mean(acc) for acc in accuracies])
     best_m = m_choices[best_m_idx]
 
@@ -65,7 +75,8 @@ def basic_experiment(x_train, y_train, x_test, y_test, formatted_print=False):
     new_tree = ID3(attributes_names, 0)
     new_tree.fit(x_train, y_train)
     y_pred = new_tree.predict(x_test)
-    acc = l2_dist(y_test, y_pred)
+    acc_sum = np.count_nonzero(y_pred == y_test)
+    acc = acc_sum / y_pred.size
     # ========================
 
     assert acc > 0.9, 'you should get an accuracy of at least 90% for the full ID3 decision tree'
@@ -88,13 +99,12 @@ def cross_validation_experiment(plot_graph=True):
 
     best_m = None
     accuracies = []
-    m_choices = []
+    m_choices = [0, 10, 20, 50, 100]
     num_folds = 5
 
     # ====== YOUR CODE: ======
     assert len(m_choices) >= 5, 'fill the m_choices list with  at least 5 different values for M.'
-    raise NotImplementedError
-
+    best_m, accuracies = find_best_pruning_m(train_dataset, m_choices, num_folds)
     # ========================
     accuracies_mean = np.array([np.mean(acc) * 100 for acc in accuracies])
     if plot_graph:
@@ -127,7 +137,10 @@ def best_m_test(x_train, y_train, x_test, y_test, min_for_pruning):
     acc = None
 
     # ====== YOUR CODE: ======
-    raise NotImplementedError
+    model = ID3(label_names=attributes_names, min_for_pruning=min_for_pruning)
+    model.fit(x_train, y_train)
+    model_pred = model.predict(x_test)
+    acc = np.count_nonzero(model_pred == y_test) / model_pred.size
     # ========================
 
     return acc
@@ -144,7 +157,7 @@ if __name__ == '__main__':
         modify the call "utils.set_formatted_values(value=False)" from False to True and run it
     """
     formatted_print = True
-    basic_experiment(*data_split, formatted_print)
+    # basic_experiment(*data_split, formatted_print)
 
     """
        cross validation experiment

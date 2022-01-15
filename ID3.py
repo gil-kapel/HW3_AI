@@ -35,10 +35,12 @@ class ID3:
         impurity = 0.0
 
         # ====== YOUR CODE: ======
-        label_size = sum(counts.values())
+        label_size = labels.size
         for value in counts.values():
             pc = value / label_size
-            impurity -= pc * math.log(pc, 2)
+            if pc != 0:
+                impurity -= pc * math.log(pc, 2)
+
         # ========================
 
         return impurity
@@ -62,7 +64,10 @@ class ID3:
 
         info_gain_value = 0.0
         # ====== YOUR CODE: ======
-        info_gain_value = current_uncertainty - self.entropy(right, right_labels) - self.entropy(left, left_labels)
+        total_items = left.size+right.size
+        right_multiplier = (right.size/total_items)
+        left_multiplier = (left.size/total_items)
+        info_gain_value = current_uncertainty - right_multiplier*self.entropy(right, right_labels) - left_multiplier*self.entropy(left, left_labels)
         # ========================
 
         return info_gain_value
@@ -111,15 +116,15 @@ class ID3:
         current_uncertainty = self.entropy(rows, labels)
 
         # ====== YOUR CODE: ======
-        curr_gain = 0
         for col_index, column in enumerate(numpy.transpose(rows)):
-            for row_index, value in enumerate(column):
-                new_question = Question(self.label_names[col_index+1], col_index, value)
-                gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
-                if gain > best_gain:
-                    best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
+            if self.label_names[col_index+1] not in self.used_features:
+                for row_index, value in enumerate(column):
+                    new_question = Question(self.label_names[col_index+1], col_index, value)
+                    gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
+                    if gain > best_gain:
+                        best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
         # ========================
-
+        self.used_features.add(best_question.column)
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
 
     def build_tree(self, rows, labels):
@@ -140,11 +145,11 @@ class ID3:
 
         # ====== YOUR CODE: ======
         gain, best_question, true_rows, true_labels, false_rows, false_labels = self.find_best_split(rows, labels)
-        if np.all(true_labels == true_labels[0]):
+        if np.all(true_labels == true_labels[0]) or true_labels.size <= self.min_for_pruning:
             true_branch = Leaf(true_rows, true_labels)
         else:
             true_branch = self.build_tree(true_rows, true_labels)
-        if np.all(false_labels == false_labels[0]):
+        if np.all(false_labels == false_labels[0]) or false_labels.size <= self.min_for_pruning:
             false_branch = Leaf(false_rows, false_labels)
         else:
             false_branch = self.build_tree(false_rows, false_labels)
@@ -180,9 +185,9 @@ class ID3:
 
         # ====== YOUR CODE: ======
         if isinstance(node, Leaf):
-            prediction = max(node.predictions.values())
+            prediction = max(node.predictions, key=node.predictions.get)
         elif isinstance(node, DecisionNode):
-            if node.question(row):
+            if node.question.match(row):
                 prediction = self.predict_sample(row, node.true_branch)
             else:
                 prediction = self.predict_sample(row, node.false_branch)
@@ -202,7 +207,7 @@ class ID3:
         y_pred = None
 
         # ====== YOUR CODE: ======
-        y_pred = [self.predict_sample(row, self.tree_root) for row in rows]
+        y_pred = np.array([self.predict_sample(row, self.tree_root) for row in rows])
         # ========================
 
         return y_pred
