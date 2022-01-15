@@ -16,7 +16,7 @@ def run_knn(k, x_train, y_train, x_test, y_test, formatted_print=True):
     print(f'{acc * 100:.2f}%' if formatted_print else acc)
 
 
-def get_top_b_features(x, y, b=5, k=51, i=0):
+def get_top_b_features(x, y, b=5, k=51):
     """
     :param k: Number of nearest neighbors.
     :param x: array-like of shape (n_samples, n_features).
@@ -30,59 +30,38 @@ def get_top_b_features(x, y, b=5, k=51, i=0):
     #   - Note: The brute force approach which examines all subsets of size `b` will not be accepted.
 
     assert 0 < b < x.shape[1], f'm should be 0 < b <= n_features = {x.shape[1]}; got b={b}.'
-
+    x_copy = x.copy()
     top_b_features_indices = []
     # ====== YOUR CODE: ======
-
-    num_of_features = x.shape[1] - b
-    n_samples = len(x)
-    for j in range(x.shape[1]):
-        array = []
-        min_acc = np.inf
-        worst_feature_index = None
-        for i in range(5):
-            indices = np.arange(x.shape[0])
-            np.random.shuffle(indices)
-            x = np.array(x[indices])
-            y = np.array(y[indices])
-            x_train1 = x[:0.8*n_samples]
-            y_train1 = y[:0.8 * n_samples]
-            x_valid = x[0.8 * n_samples:]
-            y_valid = y[0.8*n_samples:]
-            neigh = KNNClassifier(k=k)
-            neigh.train(x_train1, y_train1)
-            y_pred = neigh.predict(x_valid)
-            acc = accuracy(y_valid, y_pred)
-            array.append(acc)
-        mean_acc = np.mean(array)
-        if mean_acc < min_acc:
-            min_acc = mean_acc
-            worst_feature_index = index
-    #
-    #     worst_features = []
-    #     for i in range(num_of_features):
-    #         min_acc = np.inf
-    #         worst_feature_index=None
-    #         for index, feature in enumerate(x[1]):
-    #             train_x_feature = x_train[:, index]
-    #             valid_x_feature = x_valid[:, index]
-    #
-    #             neigh = KNNClassifier(k=k)
-    #             neigh.train(x_train, y_train)
-    #             y_pred = neigh.predict(x_test)
-    #             acc = accuracy(y_test, y_pred)
-    #             if acc < min_acc:
-    #                 min_acc = acc
-    #                 worst_feature_index = index
-    #             insert_feature(x_train, x_test, index, train_x_feature, test_x_feature)
-    #         delete_feature(x_train, x_test, worst_feature_index)
-    #         worst_features.append(worst_feature_index)
-    # ========================
-    top_b_features_indices = [0, 1, 2, 3, 4, 5, 6, 7]
-    array = [1, 2, i]
-    for j in array:
-        if j in top_b_features_indices:
-            top_b_features_indices.remove(j)
+    n_samples = x.shape[0]
+    for a in range(b):
+        max_acc = -np.inf
+        best_feature_index = None
+        for j in range(x.shape[1]):
+            array = []
+            if j not in top_b_features_indices:
+                top_b_features_indices.append(j)
+                for r in range(5):
+                    x = x_copy[:, top_b_features_indices]
+                    indices = np.arange(x.shape[0])
+                    np.random.shuffle(indices)
+                    x = np.array(x[indices])
+                    y = np.array(y[indices])
+                    x_train1 = x[:0.8*n_samples]
+                    y_train1 = y[:0.8 * n_samples]
+                    x_valid = x[0.8 * n_samples:]
+                    y_valid = y[0.8*n_samples:]
+                    neigh = KNNClassifier(k=k)
+                    neigh.train(x_train1, y_train1)
+                    y_pred = neigh.predict(x_valid)
+                    acc = accuracy(y_valid, y_pred)
+                    array.append(acc)
+                mean_acc = np.mean(array)
+                if mean_acc > max_acc:
+                    max_acc = mean_acc
+                    best_feature_index = j
+                top_b_features_indices.remove(j)
+        top_b_features_indices.append(best_feature_index)
     return top_b_features_indices
 
 
@@ -130,13 +109,12 @@ if __name__ == '__main__':
     b = 5
 
     # # ========================================================================
-    for i in range(8):
-        print("-" * 10 + f'k  = {best_k}' + "-" * 10)
-        exp_print('KNN in raw data: ')
-        run_knn(best_k, x_train, y_train, x_test, y_test)
+    print("-" * 10 + f'k  = {best_k}' + "-" * 10)
+    exp_print('KNN in raw data: ')
+    run_knn(best_k, x_train, y_train, x_test, y_test)
 
-        top_m = get_top_b_features(x_train, y_train, b=5, k=best_k, i=i)
-        x_train_new = x_train[:, top_m]
-        x_test_test = x_test[:, top_m]
-        exp_print(f'KNN in selected feature data: ')
-        run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
+    top_m = get_top_b_features(x_train, y_train, b=2, k=best_k)
+    x_train_new = x_train[:, top_m]
+    x_test_test = x_test[:, top_m]
+    exp_print(f'KNN in selected feature data: ')
+    run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
