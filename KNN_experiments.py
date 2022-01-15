@@ -37,20 +37,21 @@ def get_top_b_features(x, y, b=5, k=51):
     for a in range(b):
         max_acc = -np.inf
         best_feature_index = None
-        for j in range(x.shape[1]):
+        for j in range(x_copy.shape[1]):
             array = []
             if j not in top_b_features_indices:
                 top_b_features_indices.append(j)
-                for r in range(5):
+                for r in range(10):
                     x = x_copy[:, top_b_features_indices]
                     indices = np.arange(x.shape[0])
                     np.random.shuffle(indices)
                     x = np.array(x[indices])
                     y = np.array(y[indices])
-                    x_train1 = x[:0.8*n_samples]
-                    y_train1 = y[:0.8 * n_samples]
-                    x_valid = x[0.8 * n_samples:]
-                    y_valid = y[0.8*n_samples:]
+                    a = int(0.8 * n_samples)
+                    x_train1 = x[:a]
+                    y_train1 = y[:a]
+                    x_valid = x[a:]
+                    y_valid = y[a:]
                     neigh = KNNClassifier(k=k)
                     neigh.train(x_train1, y_train1)
                     y_pred = neigh.predict(x_valid)
@@ -113,8 +114,9 @@ if __name__ == '__main__':
     exp_print('KNN in raw data: ')
     run_knn(best_k, x_train, y_train, x_test, y_test)
 
-    top_m = get_top_b_features(x_train, y_train, b=2, k=best_k)
+    top_m = get_top_b_features(x_train, y_train, b=5, k=best_k)
     x_train_new = x_train[:, top_m]
     x_test_test = x_test[:, top_m]
+    print(top_m)
     exp_print(f'KNN in selected feature data: ')
     run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
