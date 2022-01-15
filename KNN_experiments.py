@@ -38,31 +38,32 @@ def get_top_b_features(x, y, b=5, k=51):
         max_acc = -np.inf
         best_feature_index = None
         for j in range(x_copy.shape[1]):
+            if j in top_b_features_indices:
+                continue
             array = []
-            if j not in top_b_features_indices:
-                top_b_features_indices.append(j)
-                for r in range(10):
-                    x = x_copy[:, top_b_features_indices]
-                    indices = np.arange(x.shape[0])
-                    np.random.shuffle(indices)
-                    x = np.array(x[indices])
-                    y = np.array(y[indices])
-                    a = int(0.8 * n_samples)
-                    x_train1 = x[:a]
-                    y_train1 = y[:a]
-                    x_valid = x[a:]
-                    y_valid = y[a:]
-                    neigh = KNNClassifier(k=k)
-                    neigh.train(x_train1, y_train1)
-                    y_pred = neigh.predict(x_valid)
-                    acc = accuracy(y_valid, y_pred)
-                    array.append(acc)
-                mean_acc = np.mean(array)
-                if mean_acc > max_acc:
-                    max_acc = mean_acc
-                    best_feature_index = j
-                top_b_features_indices.remove(j)
+            top_b_features_indices.append(j)
+            for r in range(20):
+                x = x_copy[:, top_b_features_indices]
+                shuffler = np.random.permutation(len(x))
+                x = x[shuffler]
+                y = y[shuffler]
+                a = int(0.8 * n_samples)
+                x_train1 = x[:a]
+                y_train1 = y[:a]
+                x_valid = x[a:]
+                y_valid = y[a:]
+                neigh = KNNClassifier(k=k)
+                neigh.train(x_train1, y_train1)
+                y_pred = neigh.predict(x_valid)
+                acc = accuracy(y_valid, y_pred)
+                array.append(acc)
+            mean_acc = np.mean(array)
+            if mean_acc > max_acc:
+                max_acc = mean_acc
+                best_feature_index = j
+            top_b_features_indices.remove(j)
         top_b_features_indices.append(best_feature_index)
+    top_b_features_indices.sort()
     return top_b_features_indices
 
 
@@ -114,9 +115,10 @@ if __name__ == '__main__':
     exp_print('KNN in raw data: ')
     run_knn(best_k, x_train, y_train, x_test, y_test)
 
-    top_m = get_top_b_features(x_train, y_train, b=5, k=best_k)
-    x_train_new = x_train[:, top_m]
-    x_test_test = x_test[:, top_m]
-    print(top_m)
-    exp_print(f'KNN in selected feature data: ')
-    run_knn(best_k, x_train_new, y_train, x_test_test, y_test)
+    for x in range(10):
+        top_m = get_top_b_features(x_train, y_train, b=5, k=best_k)
+        x_train_new = x_train[:, top_m]
+        x_test_test = x_test[:, top_m]
+        print(top_m)
+        exp_print(f'KNN in selected feature data: ')
+        run_knn(best_k, x_train_new, y_train, x_test_test, y_test)

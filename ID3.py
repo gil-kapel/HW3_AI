@@ -123,8 +123,9 @@ class ID3:
                     gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
                     if gain > best_gain:
                         best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
-        # ========================
         self.used_features.add(best_question.column)
+        # ========================
+
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
 
     def build_tree(self, rows, labels):
@@ -166,6 +167,7 @@ class ID3:
         # TODO: Build the tree that fits the input data and save the root to self.tree_root
 
         # ====== YOUR CODE: ======
+        self.used_features = set()
         self.tree_root = self.build_tree(x_train, y_train)
         # ========================
 
@@ -207,7 +209,7 @@ class ID3:
         y_pred = None
 
         # ====== YOUR CODE: ======
-        y_pred = np.array([self.predict_sample(row, self.tree_root) for row in rows])
+        y_pred = np.array([self.predict_sample(row) for row in rows])
         # ========================
 
         return y_pred

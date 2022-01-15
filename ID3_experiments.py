@@ -46,15 +46,16 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
         curr_m_accuracy = []
         for ds_train, ds_valid in create_train_validation_split(train_dataset, kf):
             x_train, y_train, x_valid, y_valid = get_dataset_split(ds_train, ds_valid, target_attribute)
-            curr_acc = best_m_test(x_train, y_train, x_valid, y_valid, m)
+            model.fit(x_train, y_train)
+            model_pred = model.predict(x_valid)
+            curr_acc = accuracy(model_pred, y_valid)
             curr_m_accuracy.append(curr_acc)
+            print(f"m : {m} , acc = {curr_acc}")
         accuracies.append(curr_m_accuracy)
+        print(f"m : {m} , acc = {curr_acc}")
         # ========================
-    for index, val in enumerate(accuracies):
-        print(f"m : {m_choices[index]} mean : {np.mean(val)}")
     best_m_idx = np.argmax([np.mean(acc) for acc in accuracies])
     best_m = m_choices[best_m_idx]
-
     return best_m, accuracies
 
 
@@ -75,8 +76,7 @@ def basic_experiment(x_train, y_train, x_test, y_test, formatted_print=False):
     new_tree = ID3(attributes_names, 0)
     new_tree.fit(x_train, y_train)
     y_pred = new_tree.predict(x_test)
-    acc_sum = np.count_nonzero(y_pred == y_test)
-    acc = acc_sum / y_pred.size
+    acc = accuracy(y_pred, y_test)
     # ========================
 
     assert acc > 0.9, 'you should get an accuracy of at least 90% for the full ID3 decision tree'
@@ -99,7 +99,7 @@ def cross_validation_experiment(plot_graph=True):
 
     best_m = None
     accuracies = []
-    m_choices = [0, 10, 20, 50, 100]
+    m_choices = [0, 25, 50, 100, 150]
     num_folds = 5
 
     # ====== YOUR CODE: ======
@@ -140,7 +140,7 @@ def best_m_test(x_train, y_train, x_test, y_test, min_for_pruning):
     model = ID3(label_names=attributes_names, min_for_pruning=min_for_pruning)
     model.fit(x_train, y_train)
     model_pred = model.predict(x_test)
-    acc = np.count_nonzero(model_pred == y_test) / model_pred.size
+    acc = accuracy(model_pred, y_test)
     # ========================
 
     return acc
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         modify the call "utils.set_formatted_values(value=False)" from False to True and run it
     """
     formatted_print = True
-    # basic_experiment(*data_split, formatted_print)
+    basic_experiment(*data_split, formatted_print)
 
     """
        cross validation experiment
