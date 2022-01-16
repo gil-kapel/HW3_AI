@@ -1,6 +1,5 @@
 import numpy as np
 import sklearn.model_selection
-
 from ID3 import ID3
 from utils import *
 
@@ -31,6 +30,7 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
     """
 
     accuracies = []
+
     for i, m in enumerate(m_choices):
         model = ID3(label_names=attributes_names, min_for_pruning=m)
         # TODO:
@@ -42,17 +42,16 @@ def find_best_pruning_m(train_dataset: np.array, m_choices, num_folds=5):
         #  or implement something else.
 
         # ====== YOUR CODE: ======
-        kf = sklearn.model_selection.KFold(n_splits=num_folds, shuffle=True, random_state=305323776)
         curr_m_accuracy = []
+        kf = sklearn.model_selection.KFold(n_splits=num_folds, shuffle=True, random_state=206629966)
         for ds_train, ds_valid in create_train_validation_split(train_dataset, kf):
             x_train, y_train, x_valid, y_valid = get_dataset_split(ds_train, ds_valid, target_attribute)
-            model.fit(x_train, y_train)
-            model_pred = model.predict(x_valid)
+            model2 = ID3(label_names=attributes_names, min_for_pruning=m)
+            model2.fit(x_train, y_train)
+            model_pred = model2.predict(x_valid)
             curr_acc = accuracy(model_pred, y_valid)
             curr_m_accuracy.append(curr_acc)
-            print(f"m : {m} , acc = {curr_acc}")
         accuracies.append(curr_m_accuracy)
-        print(f"m : {m} , acc = {curr_acc}")
         # ========================
     best_m_idx = np.argmax([np.mean(acc) for acc in accuracies])
     best_m = m_choices[best_m_idx]
@@ -99,12 +98,13 @@ def cross_validation_experiment(plot_graph=True):
 
     best_m = None
     accuracies = []
-    m_choices = [0, 25, 50, 100, 150]
+    m_choices = [0, 50]
     num_folds = 5
 
     # ====== YOUR CODE: ======
-    assert len(m_choices) >= 5, 'fill the m_choices list with  at least 5 different values for M.'
-    best_m, accuracies = find_best_pruning_m(train_dataset, m_choices, num_folds)
+    _, train_dataset1, _ = load_data_set('ID3')
+    # assert len(m_choices) >= 5, 'fill the m_choices list with  at least 5 different values for M.'
+    best_m, accuracies = find_best_pruning_m(train_dataset1, m_choices, num_folds)
     # ========================
     accuracies_mean = np.array([np.mean(acc) * 100 for acc in accuracies])
     if plot_graph:
@@ -166,13 +166,13 @@ if __name__ == '__main__':
            modify the value from False to True to plot the experiment result
     """
     plot_graphs = True
-    best_m = cross_validation_experiment(plot_graph=plot_graphs)
-    print(f'best_m = {best_m}')
+    # best_m = cross_validation_experiment(plot_graph=plot_graphs)
+    # print(f'best_m = {best_m}')
 
     """
         pruning experiment, run with the best parameter
         (*) To run the experiment uncomment below code and run it
     """
-    acc = best_m_test(*data_split, min_for_pruning=best_m)
+    acc = best_m_test(*data_split, min_for_pruning=50)
     assert acc > 0.95, 'you should get an accuracy of at least 95% for the pruned ID3 decision tree'
     print(f'Test Accuracy: {acc * 100:.2f}%' if formatted_print else acc)

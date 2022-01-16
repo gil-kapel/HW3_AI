@@ -114,18 +114,16 @@ class ID3:
         best_false_rows, best_false_labels = None, None
         best_true_rows, best_true_labels = None, None
         current_uncertainty = self.entropy(rows, labels)
-
         # ====== YOUR CODE: ======
-        for col_index, column in enumerate(numpy.transpose(rows)):
-            if self.label_names[col_index+1] not in self.used_features:
-                for row_index, value in enumerate(column):
+        for row_index, row in enumerate(rows):
+            for col_index, value in enumerate(row):
+                if self.label_names[col_index+1] not in self.used_features:
                     new_question = Question(self.label_names[col_index+1], col_index, value)
                     gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
                     if gain > best_gain:
                         best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
-        self.used_features.add(best_question.column)
         # ========================
-
+        self.used_features.add(best_question.column)
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
 
     def build_tree(self, rows, labels):
