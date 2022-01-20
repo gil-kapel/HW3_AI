@@ -3,7 +3,7 @@ import math
 import numpy
 import numpy as np
 
-from DecisonTree import Leaf, Question, DecisionNode, class_counts
+from DecisonTree import Leaf, Question, DecisionNode, class_counts, unique_vals
 from utils import *
 
 """
@@ -115,15 +115,16 @@ class ID3:
         best_true_rows, best_true_labels = None, None
         current_uncertainty = self.entropy(rows, labels)
         # ====== YOUR CODE: ======
-        for row_index, row in enumerate(rows):
-            for col_index, value in enumerate(row):
-                if self.label_names[col_index+1] not in self.used_features:
+        for col_index, col in enumerate(np.transpose(rows)):
+            for value in unique_vals(rows, col_index):
+                if col_index not in self.used_features:
                     new_question = Question(self.label_names[col_index+1], col_index, value)
                     gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
-                    if gain > best_gain:
+                    if gain >= best_gain:
                         best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
+
         # ========================
-        self.used_features.add(best_question.column)
+        self.used_features.add(best_question.column_idx)
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
 
     def build_tree(self, rows, labels):
