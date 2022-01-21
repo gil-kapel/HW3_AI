@@ -117,14 +117,14 @@ class ID3:
         # ====== YOUR CODE: ======
         for col_index, col in enumerate(np.transpose(rows)):
             for value in unique_vals(rows, col_index):
-                if col_index not in self.used_features:
+                if (col_index, value) not in self.used_features:
                     new_question = Question(self.label_names[col_index+1], col_index, value)
                     gain, true_rows, true_labels, false_rows, false_labels = self.partition(rows, labels, new_question, current_uncertainty)
                     if gain >= best_gain:
                         best_gain, best_true_rows, best_true_labels, best_false_rows, best_false_labels, best_question = gain, true_rows, true_labels, false_rows, false_labels, new_question
 
         # ========================
-        self.used_features.add(best_question.column_idx)
+        self.used_features.add((best_question.column_idx, best_question.value))
         return best_gain, best_question, best_true_rows, best_true_labels, best_false_rows, best_false_labels
 
     def build_tree(self, rows, labels):
